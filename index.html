@@ -314,6 +314,15 @@
       });
       const respons = await response.json();
       alert(respons.status);
+      
+      // --- TAMBAHAN UNTUK CLEAR LOG & MEMORI SETELAH REKAP ---
+      localStorage.clear(); // Menghapus semua kunci lock oneshoot harian siswa di HP
+      
+      // Mengembalikan teks box log absen ke kondisi awal yang bersih
+      const logBox = document.getElementById('log-absen-terakhir');
+      logBox.className = "card status-card d-flex align-items-center justify-content-center p-3 bg-white text-dark shadow-sm mx-auto max-width-500";
+      logBox.innerText = "Silakan berdiri di depan kamera untuk absen";
+      
     } catch (e) {
       alert("Gagal memproses rekap harian.");
     }
