@@ -104,6 +104,44 @@
   let currentFacingMode = "user"; 
   let localStream = null;
 
+  // FUNGSI UNTUK GENERATE BUNYI "DING" MANIS SECARA PROGRAMATIS (Web Audio API)
+  function putarSuaraDing() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      
+      const ctx = new AudioContext();
+      
+      // Nada pertama (pendek, agak rendah)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(523.25, ctx.currentTime); // Nada C5
+      gain1.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(ctx.currentTime);
+      osc1.stop(ctx.currentTime + 0.15);
+
+      // Nada kedua (nada "Ding" utama, tinggi dan berdenging manis)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08); // Nada E5
+      gain2.gain.setValueAtTime(0, ctx.currentTime);
+      gain2.gain.setValueAtTime(0.4, ctx.currentTime + 0.08);
+      gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(ctx.currentTime + 0.08);
+      osc2.stop(ctx.currentTime + 0.6);
+      
+    } catch (e) {
+      console.error("Gagal memutar audio otomatis:", e);
+    }
+  }
+
   window.onload = function() {
     const statusBox = document.getElementById('status-sistem');
     
@@ -245,7 +283,12 @@
         method: "POST",
         body: JSON.stringify({ aksi: "catat_absen", id: id, nama: nama, kelas: kelas })
       });
-      await response.json();
+      const hasilData = await response.json();
+
+      if (hasilData.status && hasilData.status.includes("SUKSES")) {
+        // MAINKAN BUNYI DING SAAT BERHASIL ABSEN
+        putarSuaraDing();
+      }
 
       // SUKSES: Kunci ID siswa ini khusus untuk tanggal hari ini
       localStorage.setItem("absen_" + id, tanggalHariIni);
@@ -289,6 +332,12 @@
         body: JSON.stringify({ aksi: "simpan_wajah", id: id, nama: nama, kelas: kelas, descriptor: descriptorString })
       });
       const respons = await response.json();
+      
+      if (respons.status && respons.status.includes("SUKSES")) {
+        // MAINKAN BUNYI DING SAAT BERHASIL DAFTAR WAJAH BARU
+        putarSuaraDing();
+      }
+      
       alert(respons.status);
       
       document.getElementById('reg-id').value = "";
@@ -325,11 +374,9 @@
       const tanggalFile = respons.tanggal;
       
       // --- PROSES GENERATE FILE EXCEL DI FRONTEND ---
-      // Membuat lembar kerja baru kosong
       const wb = XLSX.utils.book_new();
       let dataUntukExcel = [];
       
-      // Susun data sesuai struktur yang Anda inginkan baris per baris
       for (let kls in dataRekap) {
         dataUntukExcel.push(["KELAS: " + kls, "", ""]);
         dataUntukExcel.push(["Jam Absen", "ID Siswa", "Nama Siswa"]);
@@ -338,7 +385,6 @@
           dataUntukExcel.push([item.jam, item.id, item.nama]);
         });
         
-        // Memberi jarak kosong antar blok kelas
         dataUntukExcel.push(["", "", ""]);
         dataUntukExcel.push(["", "", ""]);
       }
@@ -349,16 +395,13 @@
         return;
       }
       
-      // Konversi array data menjadi Worksheet SheetJS
       const ws = XLSX.utils.aoa_to_sheet(dataUntukExcel);
       XLSX.utils.book_append_sheet(wb, ws, "Rekap_Presensi");
       
-      // Download file Excel asli (.xlsx) ke komputer/HP user
       XLSX.writeFile(wb, `Rekap_Presensi_${tanggalFile}.xlsx`);
       
       alert("SUKSES: Laporan Excel berhasil diunduh dan Log harian di Google Sheets telah dibersihkan!");
       
-      // --- PEMBERSIHAN MEMORI LOKAL KIOCk ---
       localStorage.clear(); 
       
       const logBox = document.getElementById('log-absen-terakhir');
