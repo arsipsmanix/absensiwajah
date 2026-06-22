@@ -3,17 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Si-WAJAH</title>
+  <title>Si-WAJAH - SMAN 9 Surabaya</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://unpkg.com/@vladmandic/face-api/dist/face-api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
-    body { background-color: #f4f6f9; padding-top: 20px; font-family: sans-serif; }
+    body { background-color: #f4f6f9; padding-top: 30px; font-family: sans-serif; }
     
     /* Warna Biru Khas Aplikasi */
     .btn-primary { background-color: #0a58ca; border-color: #0a58ca; }
     .btn-primary:hover { background-color: #084298; border-color: #084298; }
-    .nav-pills .nav-link.active, .nav-pills .show > .nav-link { background-color: #0a58ca; }
     
     #video-container { position: relative; width: 100%; max-width: 500px; margin: auto; }
     video { 
@@ -24,160 +23,200 @@
       background-color: #222; 
       object-fit: cover; 
     }
-    /* Efek cermin hanya aktif saat menggunakan kamera depan (user) */
     .mirror { transform: scaleX(-1); }
     
     .status-card { min-height: 80px; font-weight: bold; font-size: 1.2rem; }
     .max-width-500 { max-width: 500px; }
-    .logo-sekolah { max-height: 45px; object-fit: contain; }
+    .logo-sekolah { max-height: 80px; object-fit: contain; }
+    .logo-sekolah-sm { max-height: 45px; object-fit: contain; }
+    
+    /* Manajemen Halaman */
+    .halaman-app { display: none; }
+    .halaman-app.aktif { display: block; }
+    
+    /* Desain Menu Utama */
+    .menu-card {
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .menu-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+    }
   </style>
 </head>
 <body>
 
 <div class="container text-center">
-  <div class="d-flex align-items-center justify-content-center mb-3">
-    <img src="https://lh3.googleusercontent.com/u/0/d/1NmhujSqCWX3fY30wSlAe9Ur5aR0jevXc" class="logo-sekolah me-2" alt="Logo Sekolah">
-    <h3 class="m-0">Sistem Presensi Wajah SMAN 9 Surabaya</h3>
-  </div>
-  
-  <ul class="nav nav-pills justify-content-center mb-3" id="menuTab" role="tablist">
-    <li class="nav-item">
-      <button class="nav-link active" id="absen-tab" data-bs-toggle="tab" data-bs-target="#absen-panel" onclick="aktifkanModeAbsen()">Mode Presensi</button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin-panel" onclick="bukaMenuAdmin()">Pendaftaran & Rekap</button>
-    </li>
-  </ul>
 
-  <div id="status-sistem" class="alert alert-warning mb-3 mx-auto max-width-500">Mengunduh Model AI & Database Wajah... Mohon Tunggu.</div>
-  
-  <div id="video-container" class="mb-2">
-    <video id="webcam" class="mirror" autoplay playsinline muted></video>
-  </div>
-
-  <div class="mb-2">
-    <button id="btn-ganti-kamera" class="btn btn-secondary btn-sm d-none mx-auto" onclick="toggleKameraAdmin()">🔄 Alihkan Kamera Belakang/Depan</button>
-  </div>
-
-  <div class="tab-content">
-    <div class="tab-pane fade show active" id="absen-panel">
-      <div id="log-absen-terakhir" class="card status-card d-flex align-items-center justify-content-center p-3 bg-white shadow-sm mx-auto max-width-500">
-        Silakan berdiri di depan kamera untuk absen
+  <div id="page-home" class="halaman-app aktif mx-auto max-width-500 py-4">
+    <img src="https://lh3.googleusercontent.com/u/0/d/1NmhujSqCWX3fY30wSlAe9Ur5aR0jevXc" class="logo-sekolah mb-3" alt="Logo Sekolah">
+    <h2 class="fw-bold text-dark mb-1">Si-WAJAH</h2>
+    <p class="text-muted mb-4">Sistem Presensi Wajah Kiosk<br>SMAN 9 Surabaya</p>
+    
+    <div class="card p-4 shadow-sm border-0 bg-white rounded-4 mb-3">
+      <h5 class="fw-bold mb-3 text-start text-secondary text-center">Pilih Mode Aplikasi</h5>
+      
+      <div class="card menu-card p-3 border-start border-primary border-4 shadow-sm bg-light mb-3 text-start" onclick="masukModePresensi()">
+        <h5 class="fw-bold text-primary m-0">📸 Mode Presensi Siswa</h5>
+        <small class="text-muted">Aktifkan kamera depan Kiosk untuk pencatatan kehadiran mandiri siswa.</small>
+      </div>
+      
+      <div class="card menu-card p-3 border-start border-danger border-4 shadow-sm bg-light text-start" onclick="masukMenuAdmin()">
+        <h5 class="fw-bold text-danger m-0">⚙️ Pendaftaran & Manajemen Admin</h5>
+        <small class="text-muted">Registrasi wajah siswa baru, sinkronisasi database, dan unduh laporan Excel.</small>
       </div>
     </div>
-
-    <div class="tab-pane fade" id="admin-panel">
-      <div id="form-registrasi-container" class="card p-3 shadow-sm text-start mx-auto mb-3 max-width-500">
-        <h5 class="mb-2 text-primary">Form Registrasi Siswa Baru</h5>
-        <div class="row g-2 mb-2">
-          <div class="col-6">
-            <input type="text" id="reg-id" class="form-control form-control-sm" placeholder="NIS / ID Siswa">
-          </div>
-          <div class="col-6">
-            <input type="text" id="reg-kelas" class="form-control form-control-sm" placeholder="Kelas (X-MIPA-1)">
-          </div>
-        </div>
-        <div class="mb-2">
-          <input type="text" id="reg-nama" class="form-control form-control-sm" placeholder="Nama Lengkap Siswa">
-        </div>
-        <button class="btn btn-primary btn-sm w-100 mb-3" onclick="tangkapDanDaftarWajah()">Pindai & Daftarkan Wajah</button>
-        
-        <hr class="my-2">
-        <h5 class="mb-2 text-success">Menu Manajemen & Laporan</h5>
-        <button class="btn btn-success btn-sm w-100 mb-2" onclick="manualSync()">🔄 Sinkronisasi Ulang Data Induk Kiosk</button>
-        <button class="btn btn-danger btn-sm w-100" onclick="prosesRekapHarianExcel()">📊 Unduh Rekap Excel & Kosongkan Log Hari Ini</button>
-      </div>
-    </div>
+    <div class="text-muted" style="font-size: 0.85rem;">Menerapkan Standar Integritas Data - SMAN 9 Surabaya © 2026</div>
   </div>
+
+
+  <div id="page-presensi" class="halaman-app">
+    <div class="d-flex align-items-center justify-content-center mb-3">
+      <img src="https://lh3.googleusercontent.com/u/0/d/1NmhujSqCWX3fY30wSlAe9Ur5aR0jevXc" class="logo-sekolah-sm me-2" alt="Logo Sekolah">
+      <h4 class="m-0 fw-bold">Presensi Wajah SMAN 9 Surabaya</h4>
+    </div>
+    
+    <div id="status-sistem-presensi" class="alert alert-warning mb-3 mx-auto max-width-500">Memuat kecerdasan buatan (AI)...</div>
+    
+    <div id="video-container" class="mb-3">
+      <video id="webcam-presensi" class="mirror" autoplay playsinline muted></video>
+    </div>
+    
+    <div id="log-absen-terakhir" class="card status-card d-flex align-items-center justify-content-center p-3 bg-white shadow-sm mx-auto max-width-500 mb-3">
+      Silakan berdiri di depan kamera untuk absen
+    </div>
+    
+    <button class="btn btn-secondary btn-sm" onclick="kembaliKeHome()">🏠 Kembali ke Halaman Utama</button>
+  </div>
+
+
+  <div id="page-admin" class="halaman-app">
+    <div class="d-flex align-items-center justify-content-center mb-3">
+      <img src="https://lh3.googleusercontent.com/u/0/d/1NmhujSqCWX3fY30wSlAe9Ur5aR0jevXc" class="logo-sekolah-sm me-2" alt="Logo Sekolah">
+      <h4 class="m-0 fw-bold text-danger">Menu Manajemen Admin</h4>
+    </div>
+    
+    <div id="status-sistem-admin" class="alert alert-info mb-3 mx-auto max-width-500">Mode Panel Kontrol Aktif</div>
+    
+    <div id="video-container" class="mb-2">
+      <video id="webcam-admin" autoplay playsinline muted></video>
+    </div>
+    
+    <div class="mb-3">
+      <button class="btn btn-secondary btn-sm mx-auto" onclick="toggleKameraAdmin()">🔄 Alihkan Kamera Belakang/Depan</button>
+    </div>
+
+    <div id="form-registrasi-container" class="card p-3 shadow-sm text-start mx-auto mb-3 max-width-500">
+      <h5 class="mb-2 text-primary fw-bold">Form Registrasi Siswa Baru</h5>
+      <div class="row g-2 mb-2">
+        <div class="col-6">
+          <input type="text" id="reg-id" class="form-control form-control-sm" placeholder="NIS / ID Siswa">
+        </div>
+        <div class="col-6">
+          <select id="reg-kelas" class="form-select form-select-sm">
+            </select>
+        </div>
+      </div>
+      <div class="mb-2">
+        <input type="text" id="reg-nama" class="form-control form-control-sm" placeholder="Nama Lengkap Siswa">
+      </div>
+      <button class="btn btn-primary btn-sm w-100 mb-3" onclick="tangkapDanDaftarWajah()">Pindai & Daftarkan Wajah</button>
+      
+      <hr class="my-2">
+      <h5 class="mb-2 text-success fw-bold">Menu Manajemen & Laporan</h5>
+      <button class="btn btn-success btn-sm w-100 mb-2" onclick="manualSync()">🔄 Sinkronisasi Ulang Data Induk Kiosk</button>
+      <button class="btn btn-danger btn-sm w-100" onclick="prosesRekapHarianExcel()">📊 Unduh Rekap Excel & Kosongkan Log Hari Ini</button>
+    </div>
+    
+    <button class="btn btn-secondary btn-sm mb-4" onclick="kembaliKeHome()">🏠 Kembali ke Halaman Utama</button>
+  </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-  // URL BACKEND GAS
+  // URL BACKEND GOOGLE APPS SCRIPT (GAS) Anda
   const URL_API_GAS = "https://script.google.com/macros/s/AKfycbzMK6ITHRXJ8gcawWQ57fqotqSpS5EmGb85dhJY9Nz07HisK88rP7hRu1c3_4hRB1dY/exec";
+
+  // DAFTAR KELAS RESMI SMAN 9 SURABAYA (Sesuai Data Anda)
+  const MASTER_KELAS = [
+    "-- Pilih Kelas --",
+    "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X10", "X11",
+    "XI A1", "XI A2", "XI A3", "XI A4", "XI B", "XI C1", "XI C2", "XI C3", "XI D1", "XI D2",
+    "XII A1", "XII A2", "XII A3", "XII A4", "XII B", "XII C1", "XII C2", "XII C3", "XII C4", "XII D"
+  ];
 
   let databaseWajahLokal = [];
   let faceMatcher = null;
   let jedaAbsenUser = false;
-  let modeAdminAktif = false;
+  let loopMengenaliWajah = null;
   let currentFacingMode = "user"; 
   let localStream = null;
+  let aiSudahSiap = false;
 
-  // FUNGSI UNTUK GENERATE BUNYI "DING" MANIS SECARA PROGRAMATIS (Web Audio API)
+  // Generate Dropdown Kelas secara otomatis saat halaman web dimuat
+  window.addEventListener('DOMContentLoaded', () => {
+    const selectKelas = document.getElementById('reg-kelas');
+    MASTER_KELAS.forEach(kelas => {
+      const opt = document.createElement('option');
+      opt.value = kelas === "-- Pilih Kelas --" ? "" : kelas;
+      opt.textContent = kelas;
+      selectKelas.appendChild(opt);
+    });
+  });
+
+  // FUNGSI UNTUK GENERATE BUNYI "DING"
   function putarSuaraDing() {
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return;
-      
       const ctx = new AudioContext();
       
-      // Nada pertama (pendek, agak rendah)
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
       osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(523.25, ctx.currentTime); // Nada C5
+      osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
       gain1.gain.setValueAtTime(0.3, ctx.currentTime);
       gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-      osc1.connect(gain1);
-      gain1.connect(ctx.destination);
-      osc1.start(ctx.currentTime);
-      osc1.stop(ctx.currentTime + 0.15);
+      osc1.connect(gain1); gain1.connect(ctx.destination);
+      osc1.start(ctx.currentTime); osc1.stop(ctx.currentTime + 0.15);
 
-      // Nada kedua (nada "Ding" utama, tinggi dan berdenging manis)
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08); // Nada E5
+      osc2.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08);
       gain2.gain.setValueAtTime(0, ctx.currentTime);
       gain2.gain.setValueAtTime(0.4, ctx.currentTime + 0.08);
       gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.start(ctx.currentTime + 0.08);
-      osc2.stop(ctx.currentTime + 0.6);
-      
-    } catch (e) {
-      console.error("Gagal memutar audio otomatis:", e);
+      osc2.connect(gain2); gain2.connect(ctx.destination);
+      osc2.start(ctx.currentTime + 0.08); osc2.stop(ctx.currentTime + 0.6);
+    } catch (e) { console.error("Gagal putar audio:", e); }
+  }
+
+  // NAVIGASI: PINDAH VIEW HALAMAN
+  function pindahHalaman(idHalaman) {
+    document.querySelectorAll('.halaman-app').forEach(el => el.classList.remove('aktif'));
+    document.getElementById(idHalaman).classList.add('aktif');
+  }
+
+  // MANAJEMEN START/STOP KAMERA DAN LOGIKA STREAM
+  function matikanKamera() {
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      localStream = null;
+    }
+    if (loopMengenaliWajah) {
+      clearInterval(loopMengenaliWajah);
+      loopMengenaliWajah = null;
     }
   }
 
-  window.onload = function() {
-    const statusBox = document.getElementById('status-sistem');
+  function mulaiKamera(idVideoElement, facingMode) {
+    matikanKamera();
+    const video = document.getElementById(idVideoElement);
     
-    mulaiKamera(currentFacingMode);
-    
-    statusBox.className = "alert alert-warning mb-3 mx-auto max-width-500";
-    statusBox.innerText = "Kamera aktif. Memuat modul kecerdasan buatan (AI)...";
-
-    setTimeout(async () => {
-      try {
-        const MODEL_URL = 'https://unpkg.com/@vladmandic/face-api/model/';
-        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-        
-        await sinkronisasiDatabase();
-        
-        statusBox.className = "alert alert-success mb-3 mx-auto max-width-500";
-        statusBox.innerText = "Sistem Siap! AI & Database Wajah Aktif.";
-      } catch (err) {
-        console.error("AI gagal dimuat:", err);
-        statusBox.className = "alert alert-danger mb-3 mx-auto max-width-500";
-        statusBox.innerText = "Gagal memuat AI. Periksa koneksi internet.";
-      }
-    }, 100);
-    
-    setInterval(prosesMengenaliWajahBerkala, 500);
-  };
-
-  function mulaiKamera(facingMode) {
-    const video = document.getElementById('webcam');
-    
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
-    }
-
     navigator.mediaDevices.getUserMedia({ 
       video: { facingMode: facingMode }, 
       audio: false 
@@ -185,26 +224,40 @@
     .then(stream => {
       localStream = stream;
       video.srcObject = stream;
-      
-      if (facingMode === "user") {
-        video.classList.add('mirror');
-      } else {
-        video.classList.remove('mirror');
-      }
-
+      if (facingMode === "user") { video.classList.add('mirror'); } 
+      else { video.classList.remove('mirror'); }
       video.onloadedmetadata = function() {
-        video.play().catch(e => console.log("Gagal play otomatis:", e));
+        video.play().catch(e => console.log("Gagal play:", e));
       };
     })
     .catch(err => {
-      console.error("Gagal akses kamera:", err);
-      alert("Gagal mengakses kamera jenis " + facingMode + ": " + err.message);
+      alert("Gagal mengakses kamera: " + err.message);
+      kembaliKeHome();
     });
   }
 
-  function toggleKameraAdmin() {
-    currentFacingMode = (currentFacingMode === "user") ? "environment" : "user";
-    mulaiKamera(currentFacingMode);
+  // CORE: ASYNC MEMUAT AI & DATABASE WAJAH
+  async function inisialisasiAIDanDatabase(idStatusBox) {
+    const statusBox = document.getElementById(idStatusBox);
+    if (aiSudahSiap) return true;
+    
+    try {
+      const MODEL_URL = 'https://unpkg.com/@vladmandic/face-api/model/';
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+      
+      statusBox.innerText = "Modul AI Aktif. Menghubungkan database sekolah...";
+      await sinkronisasiDatabase();
+      
+      aiSudahSiap = true;
+      return true;
+    } catch (err) {
+      console.error(err);
+      statusBox.className = "alert alert-danger mb-3 mx-auto max-width-500";
+      statusBox.innerText = "Gagal memuat sistem AI. Periksa koneksi internet.";
+      return false;
+    }
   }
 
   async function sinkronisasiDatabase() {
@@ -217,9 +270,7 @@
       const dataDariSheets = hasil.data;
 
       if (!dataDariSheets || dataDariSheets.length === 0) {
-        databaseWajahLokal = [];
-        faceMatcher = null;
-        return;
+        databaseWajahLokal = []; faceMatcher = null; return;
       }
 
       const labeledDescriptors = [];
@@ -229,27 +280,68 @@
             const descriptorArray = new Float32Array(JSON.parse(user.vektorTeks));
             labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(user.id + "||" + user.nama + "||" + user.kelas, [descriptorArray]));
           }
-        } catch(e) { console.error("Gagal membaca data user:", e); }
+        } catch(e) { console.error("Gagal baca user:", e); }
       });
 
       if(labeledDescriptors.length > 0) {
         faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.4);
       }
-    } catch (err) {
-      console.error("Gagal sinkronisasi data dari Sheets:", err);
+    } catch (err) { console.error("Gagal sinkronisasi:", err); }
+  }
+
+  // ACTION: TOMBOL HOME - PRESENSI
+  async function masukModePresensi() {
+    pindahHalaman('page-presensi');
+    const statusBox = document.getElementById('status-sistem-presensi');
+    statusBox.className = "alert alert-warning mb-3 mx-auto max-width-500";
+    statusBox.innerText = "Kamera aktif. Memuat modul kecerdasan buatan (AI)...";
+    
+    mulaiKamera('webcam-presensi', 'user');
+    
+    const siap = await inisialisasiAIDanDatabase('status-sistem-presensi');
+    if (siap) {
+      statusBox.className = "alert alert-success mb-3 mx-auto max-width-500";
+      statusBox.innerText = "Sistem Presensi Siap! AI & Database Wajah Aktif.";
+      // Mulai loop scan wajah berkala
+      loopMengenaliWajah = setInterval(prosesMengenaliWajahBerkala, 500);
     }
   }
 
+  // ACTION: TOMBOL HOME - MENU ADMIN
+  async function masukMenuAdmin() {
+    const pin = prompt("Masukkan PIN Keamanan Admin:");
+    if (pin === "1234") {
+      pindahHalaman('page-admin');
+      document.getElementById('status-sistem-admin').innerText = "Panel Kontrol Admin Siap.";
+      currentFacingMode = "environment"; // Default kamera belakang untuk daftar siswa
+      mulaiKamera('webcam-admin', currentFacingMode);
+      await inisialisasiAIDanDatabase('status-sistem-admin');
+    } else {
+      alert("PIN Keamanan Salah!");
+    }
+  }
+
+  function kembaliKeHome() {
+    matikanKamera();
+    pindahHalaman('page-home');
+  }
+
+  function toggleKameraAdmin() {
+    currentFacingMode = (currentFacingMode === "user") ? "environment" : "user";
+    mulaiKamera('webcam-admin', currentFacingMode);
+  }
+
   async function manualSync() {
-    document.getElementById('status-sistem').innerText = "Menyinkronkan data induk...";
+    document.getElementById('status-sistem-admin').innerText = "Menyinkronkan data induk...";
     await sinkronisasiDatabase();
-    document.getElementById('status-sistem').innerText = "Sinkronisasi Berhasil!";
+    document.getElementById('status-sistem-admin').innerText = "Sinkronisasi Berhasil!";
     alert("Database lokal Kiosk berhasil diperbarui!");
   }
 
+  // LOGIKA PENCATATAN PRESENSI OTOMATIS
   async function prosesMengenaliWajahBerkala() {
-    const video = document.getElementById('webcam');
-    if (!video.srcObject || jedaAbsenUser || modeAdminAktif || !faceMatcher) return;
+    const video = document.getElementById('webcam-presensi');
+    if (!video.srcObject || jedaAbsenUser || !faceMatcher) return;
 
     const deteksi = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
 
@@ -257,15 +349,10 @@
       const hasilCocok = faceMatcher.findBestMatch(deteksi.descriptor);
       if (hasilCocok.label !== 'unknown') {
         const [id, nama, kelas] = hasilCocok.label.split('||');
-        
-        // --- LOGIKA LOCK ONESHOOT HARIAN ---
-        const tanggalHariIni = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+        const tanggalHariIni = new Date().toISOString().split('T')[0];
         const kunciLokalSiswa = localStorage.getItem("absen_" + id);
 
-        // Jika di HP ini sudah tersimpan tanda bahwa ID tersebut sudah absen pada tanggal hari ini, skip!
-        if (kunciLokalSiswa === tanggalHariIni) {
-          return; 
-        }
+        if (kunciLokalSiswa === tanggalHariIni) return; 
 
         eksekusiKirimAbsenKeGAS(id, nama, kelas, tanggalHariIni);
       }
@@ -286,13 +373,10 @@
       const hasilData = await response.json();
 
       if (hasilData.status && hasilData.status.includes("SUKSES")) {
-        // MAINKAN BUNYI DING SAAT BERHASIL ABSEN
         putarSuaraDing();
       }
 
-      // SUKSES: Kunci ID siswa ini khusus untuk tanggal hari ini
       localStorage.setItem("absen_" + id, tanggalHariIni);
-
       logBox.className = "card status-card d-flex align-items-center justify-content-center p-3 bg-success text-white shadow-sm mx-auto max-width-500";
       logBox.innerHTML = "🎯 ABSEN BERHASIL!<br>" + nama + "<br>Kelas: " + kelas;
     } catch (err) {
@@ -307,20 +391,21 @@
     }, 3000);
   }
 
+  // LOGIKA PENDAFTARAN SISWA BARU
   async function tangkapDanDaftarWajah() {
     const id = document.getElementById('reg-id').value.trim();
     const nama = document.getElementById('reg-nama').value.trim();
-    const kelas = document.getElementById('reg-kelas').value.trim();
-    const video = document.getElementById('webcam');
+    const kelas = document.getElementById('reg-kelas').value; // Mengambil string dari dropdown select
+    const video = document.getElementById('webcam-admin');
     
-    if (!id || !nama || !kelas) { alert("Semua kolom form wajib diisi!"); return; }
+    if (!id || !nama || !kelas) { alert("Semua kolom form (termasuk pilihan kelas) wajib diisi!"); return; }
 
-    document.getElementById('status-sistem').innerText = "Sedang memindai wajah... Mohon tidak bergerak.";
+    document.getElementById('status-sistem-admin').innerText = "Sedang memindai wajah... Mohon tidak bergerak.";
 
     const deteksi = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
     if (!deteksi) { 
-      document.getElementById('status-sistem').innerText = "Mode Pendaftaran: Silakan isi data lalu klik Pindai.";
-      alert("Wajah tidak terdeteksi! Pastikan wajah siswa terlihat jelas di layar kamera."); 
+      document.getElementById('status-sistem-admin').innerText = "Panel Kontrol Admin Siap.";
+      alert("Wajah tidak terdeteksi! Pastikan wajah siswa terlihat jelas di layar."); 
       return; 
     }
 
@@ -334,28 +419,26 @@
       const respons = await response.json();
       
       if (respons.status && respons.status.includes("SUKSES")) {
-        // MAINKAN BUNYI DING SAAT BERHASIL DAFTAR WAJAH BARU
         putarSuaraDing();
       }
       
       alert(respons.status);
-      
       document.getElementById('reg-id').value = "";
       document.getElementById('reg-nama').value = "";
-      document.getElementById('reg-kelas').value = "";
+      document.getElementById('reg-kelas').selectedIndex = 0; // Reset dropdown ke pilihan pertama
       
       await sinkronisasiDatabase();
-      aktifkanModeAbsen();
+      kembaliKeHome();
     } catch(e) {
       alert("Gagal mendaftarkan wajah baru.");
     }
   }
 
+  // LOGIKA LAPORAN REKAP EXCEL FRONTEND
   async function prosesRekapHarianExcel() {
     if (!confirm("Apakah Anda yakin ingin memproses rekapitulasi? Langkah ini akan MENGUNDUH data dalam format Excel dan secara otomatis MENGHAPUS seluruh log harian di database Spreadsheet.")) return;
     
-    document.getElementById('status-sistem').className = "alert alert-warning mb-3 mx-auto max-width-500";
-    document.getElementById('status-sistem').innerText = "Menghubungi server & memproses data rekap... Silakan tunggu.";
+    document.getElementById('status-sistem-admin').innerText = "Menghubungi server & memproses data rekap... Silakan tunggu.";
     
     try {
       const response = await fetch(URL_API_GAS, {
@@ -366,88 +449,42 @@
       
       if (respons.status !== "SUKSES") {
         alert(respons.status);
-        aktifkanModeAbsen();
         return;
       }
       
       const dataRekap = respons.dataRekap;
       const tanggalFile = respons.tanggal;
       
-      // --- PROSES GENERATE FILE EXCEL DI FRONTEND ---
       const wb = XLSX.utils.book_new();
       let dataUntukExcel = [];
       
       for (let kls in dataRekap) {
         dataUntukExcel.push(["KELAS: " + kls, "", ""]);
         dataUntukExcel.push(["Jam Absen", "ID Siswa", "Nama Siswa"]);
-        
         dataRekap[kls].forEach(item => {
           dataUntukExcel.push([item.jam, item.id, item.nama]);
         });
-        
         dataUntukExcel.push(["", "", ""]);
         dataUntukExcel.push(["", "", ""]);
       }
       
       if (dataUntukExcel.length === 0) {
         alert("Tidak ada data presensi yang valid untuk diproses ke Excel.");
-        aktifkanModeAbsen();
         return;
       }
       
       const ws = XLSX.utils.aoa_to_sheet(dataUntukExcel);
       XLSX.utils.book_append_sheet(wb, ws, "Rekap_Presensi");
-      
       XLSX.writeFile(wb, `Rekap_Presensi_${tanggalFile}.xlsx`);
       
       alert("SUKSES: Laporan Excel berhasil diunduh dan Log harian di Google Sheets telah dibersihkan!");
-      
       localStorage.clear(); 
-      
-      const logBox = document.getElementById('log-absen-terakhir');
-      logBox.className = "card status-card d-flex align-items-center justify-content-center p-3 bg-white text-dark shadow-sm mx-auto max-width-500";
-      logBox.innerText = "Silakan berdiri di depan kamera untuk absen";
+      kembaliKeHome();
       
     } catch (e) {
       console.error(e);
-      alert("Gagal memproses rekap harian atau mengunduh Excel.");
+      alert("Gagal memproses rekap harian.");
     }
-    aktifkanModeAbsen();
-  }
-
-  function bukaMenuAdmin() {
-    const pin = prompt("Masukkan PIN Keamanan Admin:");
-    if (pin === "1234") {
-      modeAdminAktif = true;
-      
-      document.getElementById('btn-ganti-kamera').classList.remove('d-none');
-      
-      currentFacingMode = "environment";
-      mulaiKamera(currentFacingMode);
-
-      const adminTabEl = document.getElementById('admin-tab');
-      const tab = bootstrap.Tab.getOrCreateInstance(adminTabEl);
-      tab.show();
-      document.getElementById('status-sistem').innerText = "Mode Pendaftaran: Kamera Belakang Aktif.";
-    } else {
-      alert("PIN Salah!");
-      aktifkanModeAbsen();
-    }
-  }
-
-  function aktifkanModeAbsen() {
-    modeAdminAktif = false;
-    
-    document.getElementById('btn-ganti-kamera').classList.add('d-none');
-    
-    currentFacingMode = "user";
-    mulaiKamera(currentFacingMode);
-
-    const absenTabEl = document.getElementById('absen-tab');
-    const tab = bootstrap.Tab.getOrCreateInstance(absenTabEl);
-    tab.show();
-    document.getElementById('status-sistem').className = "alert alert-success mb-3 mx-auto max-width-500";
-    document.getElementById('status-sistem').innerText = "Sistem Siap! AI & Database Wajah Aktif.";
   }
 </script>
 </body>
