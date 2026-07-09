@@ -57,9 +57,9 @@
     <div class="card p-4 shadow-sm border-0 bg-white rounded-4 mb-3">
       <h5 class="fw-bold mb-3 text-start text-secondary text-center">Pilih Mode Aplikasi</h5>
       
-      <div class="card menu-card p-3 border-start border-primary border-4 shadow-sm bg-light mb-3 text-start" onclick="masukModePresensi()">
+      <div class="card menu-card p-3 border-start border-primary border-4 shadow-sm bg-light mb-3 text-start" onclick="validasiLokasiSebelumMasukPresensi()">
         <h5 class="fw-bold text-primary m-0">📸 Mode Presensi Siswa</h5>
-        <small class="text-muted">Aktifkan kamera depan Kiosk untuk pencatatan kehadiran mandiri siswa.</small>
+        <small class="text-muted">Aktifkan kamera depan Kiosk untuk pencatatan kehadiran mandiri siswa (Proteksi GPS Aktif).</small>
       </div>
       
       <div class="card menu-card p-3 border-start border-danger border-4 shadow-sm bg-light text-start" onclick="masukMenuAdmin()">
@@ -67,6 +67,7 @@
         <small class="text-muted">Registrasi wajah siswa baru, sinkronisasi database, dan unduh laporan Excel.</small>
       </div>
     </div>
+    <div id="info-gps-home" class="text-secondary mb-3" style="font-size: 0.9rem;">📍 Menunggu validasi radar GPS...</div>
     <div class="text-muted" style="font-size: 0.85rem;">Si-WAJAH | Develop by #3 @2026 | Part of SYNC9</div>
   </div>
 
@@ -140,12 +141,25 @@
   // URL BACKEND GOOGLE APPS SCRIPT (GAS) Anda
   const URL_API_GAS = "https://script.google.com/macros/s/AKfycbzMK6ITHRXJ8gcawWQ57fqotqSpS5EmGb85dhJY9Nz07HisK88rP7hRu1c3_4hRB1dY/exec";
 
-  // DAFTAR KELAS RESMI SMAN 9 SURABAYA (Sesuai Data Anda)
+  // KONFIGURASI GEOLOCATION MASJID SMAN 9 SURABAYA
+  const TARGET_LAT = -7.257070;
+  const TARGET_LON = 112.749838;
+  const RADIUS_MAKSIMAL_METER = 40; 
+
+  // DAFTAR KELAS RESMI HASIL CUSTOMISASI PEMBARUAN
   const MASTER_KELAS = [
     "-- Pilih Kelas --",
-    "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X10", "X11",
-    "XI A1", "XI A2", "XI A3", "XI A4", "XI B", "XI C1", "XI C2", "XI C3", "XI D1", "XI D2",
-    "XII A1", "XII A2", "XII A3", "XII A4", "XII B", "XII C1", "XII C2", "XII C3", "XII C4", "XII D"
+    "Lightning McQueen",
+    "Mater",
+    "Sally",
+    "Doc Hudson",
+    "Ramone",
+    "Flo",
+    "Luigi",
+    "Guido",
+    "Sheriff",
+    "Fillmore",
+    "Chick Hicks"
   ];
 
   let databaseWajahLokal = [];
@@ -165,7 +179,83 @@
       opt.textContent = kelas;
       selectKelas.appendChild(opt);
     });
+    
+    // Trigger pelacakan GPS pasif sejak halaman pertama dibuka
+    initGpsPasif();
   });
+
+  // FUNGSI UTAMA HITUNG JARAK MATHEMATIS (HAVERSINE FORMULA)
+  function hitungJarakMeter(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // Jari-jari bumi dalam satuan meter
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; 
+  }
+
+  // VALIDASI GPS AKTIF SEBELUM MASUK MODE ABSENSI
+  function validasiLokasiSebelumMasukPresensi() {
+    if (!navigator.geolocation) {
+      alert("Browser HP Anda tidak mendukung fitur pelacakan lokasi (GPS).");
+      return;
+    }
+
+    const infoGps = document.getElementById('info-gps-home');
+    infoGps.innerText = "⏳ Sedang mengunci sinyal GPS presisi masjid...";
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const userLat = position.coords.latitude;
+        const userLon = position.coords.longitude;
+        const akurasi = position.coords.accuracy;
+
+        // Validasi manipulasi logika Fake GPS via akurasi tak wajar
+        if (akurasi < 0.1) {
+          alert("Sistem mendeteksi anomali pada GPS perangkat Anda. Harap matikan aplikasi Fake GPS/Mock Location!");
+          infoGps.innerText = "❌ Akses diblokir! Terdeteksi Fake GPS.";
+          return;
+        }
+
+        const jarakKeMasjid = hitungJarakMeter(userLat, userLon, TARGET_LAT, TARGET_LON);
+
+        if (jarakKeMasjid <= RADIUS_MAKSIMAL_METER) {
+          infoGps.innerHTML = `✅ Terverifikasi berada di area masjid (Jarak: ${Math.round(jarakKeMasjid)}m).`;
+          masukModePresensi(); // Lolos gembok lokasi, buka kamera
+        } else {
+          infoGps.innerHTML = `❌ Jarak Anda terlalu jauh dari Masjid (${Math.round(jarakKeMasjid)} meter).`;
+          alert(`Presensi Ditolak!\nHasil deteksi radar menyatakan HP Ketua Kelas berada ${Math.round(jarakKeMasjid)} meter di luar radius gerbang masjid SMAN 9.`);
+        }
+      },
+      (error) => {
+        infoGps.innerText = "❌ Gagal mendeteksi koordinat lokasi HP.";
+        alert("Gagal memproses presensi! Pastikan fitur lokasi/GPS di HP Anda sudah dinyalakan dan memberikan izin akses lokasi ke browser.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
+
+  // Fungsi pembantu pelacak GPS pasif di halaman depan
+  function initGpsPasif() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const jarak = hitungJarakMeter(pos.coords.latitude, pos.coords.longitude, TARGET_LAT, TARGET_LON);
+          const infoGps = document.getElementById('info-gps-home');
+          if (jarak <= RADIUS_MAKSIMAL_METER) {
+            infoGps.innerHTML = `📍 Radar mengunci koordinat (Radius aman: ${Math.round(jarak)}m dari Masjid)`;
+          } else {
+            infoGps.innerHTML = `📍 Anda berada di luar area masjid (${Math.round(jarak)}m).`;
+          }
+        }, 
+        () => {}, 
+        { enableHighAccuracy: true }
+      );
+    }
+  }
 
   // FUNGSI UNTUK GENERATE BUNYI "DING"
   function putarSuaraDing() {
@@ -302,7 +392,6 @@
     if (siap) {
       statusBox.className = "alert alert-success mb-3 mx-auto max-width-500";
       statusBox.innerText = "Sistem Presensi Siap! AI & Database Wajah Aktif.";
-      // Mulai loop scan wajah berkala
       loopMengenaliWajah = setInterval(prosesMengenaliWajahBerkala, 500);
     }
   }
@@ -313,7 +402,7 @@
     if (pin === "1234") {
       pindahHalaman('page-admin');
       document.getElementById('status-sistem-admin').innerText = "Panel Kontrol Admin Siap.";
-      currentFacingMode = "environment"; // Default kamera belakang untuk daftar siswa
+      currentFacingMode = "environment"; 
       mulaiKamera('webcam-admin', currentFacingMode);
       await inisialisasiAIDanDatabase('status-sistem-admin');
     } else {
@@ -324,6 +413,7 @@
   function kembaliKeHome() {
     matikanKamera();
     pindahHalaman('page-home');
+    initGpsPasif();
   }
 
   function toggleKameraAdmin() {
@@ -395,7 +485,7 @@
   async function tangkapDanDaftarWajah() {
     const id = document.getElementById('reg-id').value.trim();
     const nama = document.getElementById('reg-nama').value.trim();
-    const kelas = document.getElementById('reg-kelas').value; // Mengambil string dari dropdown select
+    const kelas = document.getElementById('reg-kelas').value; 
     const video = document.getElementById('webcam-admin');
     
     if (!id || !nama || !kelas) { alert("Semua kolom form (termasuk pilihan kelas) wajib diisi!"); return; }
@@ -425,7 +515,7 @@
       alert(respons.status);
       document.getElementById('reg-id').value = "";
       document.getElementById('reg-nama').value = "";
-      document.getElementById('reg-kelas').selectedIndex = 0; // Reset dropdown ke pilihan pertama
+      document.getElementById('reg-kelas').selectedIndex = 0; 
       
       await sinkronisasiDatabase();
       kembaliKeHome();
