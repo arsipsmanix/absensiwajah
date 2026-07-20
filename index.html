@@ -10,7 +10,6 @@
   <style>
     body { background-color: #f4f6f9; padding-top: 30px; font-family: sans-serif; }
     
-    /* Warna Biru Khas Aplikasi */
     .btn-primary { background-color: #0a58ca; border-color: #0a58ca; }
     .btn-primary:hover { background-color: #084298; border-color: #084298; }
     
@@ -30,11 +29,9 @@
     .logo-sekolah { max-height: 80px; object-fit: contain; }
     .logo-sekolah-sm { max-height: 45px; object-fit: contain; }
     
-    /* Manajemen Halaman */
     .halaman-app { display: none; }
     .halaman-app.aktif { display: block; }
     
-    /* Desain Menu Utama */
     .menu-card {
       cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s;
@@ -49,6 +46,7 @@
 
 <div class="container text-center">
 
+  <!-- HALAMAN HOME -->
   <div id="page-home" class="halaman-app aktif mx-auto max-width-500 py-4">
     <img src="https://lh3.googleusercontent.com/u/0/d/1NmhujSqCWX3fY30wSlAe9Ur5aR0jevXc" class="logo-sekolah mb-3" alt="Logo Sekolah">
     <h2 class="fw-bold text-dark mb-1">Si-WAJAH</h2>
@@ -57,14 +55,22 @@
     <div class="card p-4 shadow-sm border-0 bg-white rounded-4 mb-3">
       <h5 class="fw-bold mb-3 text-start text-secondary text-center">Pilih Mode Aplikasi</h5>
       
+      <!-- TAMBAHAN: Dropdown Pilih Kelas Sebelum Absen -->
+      <div class="mb-3 text-start">
+        <label class="form-label fw-bold text-dark mb-1">Kelas Anda (Pilih Sebelum Absen):</label>
+        <select id="pilih-kelas-presensi" class="form-select border-primary border-2 shadow-sm">
+          <!-- Opsi akan diisi otomatis dari JS -->
+        </select>
+      </div>
+
       <div class="card menu-card p-3 border-start border-primary border-4 shadow-sm bg-light mb-3 text-start" onclick="validasiLokasiSebelumMasukPresensi()">
-        <h5 class="fw-bold text-primary m-0">📸 Mode Presensi Siswa</h5>
-        <small class="text-muted">Aktifkan kamera depan Kiosk untuk pencatatan kehadiran mandiri siswa (Proteksi GPS Aktif).</small>
+        <h5 class="fw-bold text-primary m-0">📸 Mulai Presensi Kelas</h5>
+        <small class="text-muted">Aktifkan kamera depan Kiosk khusus untuk kelas yang dipilih (Proteksi GPS & SSD Aktif).</small>
       </div>
       
       <div class="card menu-card p-3 border-start border-danger border-4 shadow-sm bg-light text-start" onclick="masukMenuAdmin()">
-        <h5 class="fw-bold text-danger m-0">⚙️ Pendaftaran & Manajemen Admin</h5>
-        <small class="text-muted">Registrasi wajah siswa baru, sinkronisasi database, dan unduh laporan Excel.</small>
+        <h5 class="fw-bold text-danger m-0">⚙️ Pendaftaran & Manajemen</h5>
+        <small class="text-muted">Registrasi wajah siswa baru, sinkronisasi database, dan unduh laporan.</small>
       </div>
     </div>
     <div id="info-gps-home" class="text-secondary mb-3" style="font-size: 0.9rem;">📍 Menunggu validasi radar GPS...</div>
@@ -72,13 +78,14 @@
   </div>
 
 
+  <!-- HALAMAN PRESENSI -->
   <div id="page-presensi" class="halaman-app">
     <div class="d-flex align-items-center justify-content-center mb-3">
       <img src="https://lh3.googleusercontent.com/u/0/d/1NmhujSqCWX3fY30wSlAe9Ur5aR0jevXc" class="logo-sekolah-sm me-2" alt="Logo Sekolah">
-      <h4 class="m-0 fw-bold">Presensi Wajah SMAN 9 Surabaya</h4>
+      <h4 class="m-0 fw-bold">Presensi <span id="label-kelas-aktif" class="text-primary"></span></h4>
     </div>
     
-    <div id="status-sistem-presensi" class="alert alert-warning mb-3 mx-auto max-width-500">Memuat kecerdasan buatan (AI)...</div>
+    <div id="status-sistem-presensi" class="alert alert-warning mb-3 mx-auto max-width-500">Memuat kecerdasan buatan (AI SSD MobileNet)...</div>
     
     <div id="video-container" class="mb-3">
       <video id="webcam-presensi" class="mirror" autoplay playsinline muted></video>
@@ -92,6 +99,7 @@
   </div>
 
 
+  <!-- HALAMAN ADMIN -->
   <div id="page-admin" class="halaman-app">
     <div class="d-flex align-items-center justify-content-center mb-3">
       <img src="https://lh3.googleusercontent.com/u/0/d/1NmhujSqCWX3fY30wSlAe9Ur5aR0jevXc" class="logo-sekolah-sm me-2" alt="Logo Sekolah">
@@ -115,18 +123,16 @@
           <input type="text" id="reg-id" class="form-control form-control-sm" placeholder="NIS / ID Siswa">
         </div>
         <div class="col-6">
-          <select id="reg-kelas" class="form-select form-select-sm">
-            </select>
+          <select id="reg-kelas" class="form-select form-select-sm"></select>
         </div>
       </div>
       <div class="mb-2">
         <input type="text" id="reg-nama" class="form-control form-control-sm" placeholder="Nama Lengkap Siswa">
       </div>
-      <button class="btn btn-primary btn-sm w-100 mb-3" onclick="tangkapDanDaftarWajah()">Pindai & Daftarkan Wajah</button>
+      <button class="btn btn-primary btn-sm w-100 mb-3" onclick="tangkapDanDaftarWajah()">Pindai & Daftarkan Wajah (Akurasi Tinggi)</button>
       
       <hr class="my-2">
       <h5 class="mb-2 text-success fw-bold">Menu Manajemen & Laporan</h5>
-      <button class="btn btn-success btn-sm w-100 mb-2" onclick="manualSync()">🔄 Sinkronisasi Ulang Data Induk Kiosk</button>
       <button class="btn btn-danger btn-sm w-100" onclick="prosesRekapHarianExcel()">📊 Unduh Rekap Excel & Kosongkan Log Hari Ini</button>
     </div>
     
@@ -138,67 +144,69 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-  // URL BACKEND GOOGLE APPS SCRIPT (GAS) Anda
+  // ----------------------------------------------------
+  // KONFIGURASI UTAMA
+  // ----------------------------------------------------
   const URL_API_GAS = "https://script.google.com/macros/s/AKfycbzMK6ITHRXJ8gcawWQ57fqotqSpS5EmGb85dhJY9Nz07HisK88rP7hRu1c3_4hRB1dY/exec";
 
-  // KONFIGURASI GEOLOCATION MASJID SMAN 9 SURABAYA
-  const TARGET_LAT = -7.257225;
-  const TARGET_LON = 112.749878;
+  const TARGET_LAT = -7.257070;
+  const TARGET_LON = 112.749838;
   const RADIUS_MAKSIMAL_METER = 40; 
+  
+  // STRATEGI 1: Ambang batas diperketat menjadi 0.35 (sangat akurat)
+  const AMBANG_BATAS_COCOK = 0.35; 
 
-  // DAFTAR KELAS RESMI HASIL CUSTOMISASI PEMBARUAN
   const MASTER_KELAS = [
     "-- Pilih Kelas --",
-    "Lightning McQueen",
-    "Mater",
-    "Sally",
-    "Doc Hudson",
-    "Ramone",
-    "Flo",
-    "Luigi",
-    "Guido",
-    "Sheriff",
-    "Fillmore",
-    "Chick Hicks"
+    "Lightning McQueen", "Mater", "Sally", "Doc Hudson", "Ramone", 
+    "Flo", "Luigi", "Guido", "Sheriff", "Fillmore", "Chick Hicks"
   ];
 
-  let databaseWajahLokal = [];
   let faceMatcher = null;
   let jedaAbsenUser = false;
   let loopMengenaliWajah = null;
   let currentFacingMode = "user"; 
   let localStream = null;
   let aiSudahSiap = false;
+  let kelasAktifTarget = ""; // Menyimpan kelas yang dipilih saat presensi
 
-  // Generate Dropdown Kelas secara otomatis saat halaman web dimuat
+  // Generate Dropdown Kelas
   window.addEventListener('DOMContentLoaded', () => {
-    const selectKelas = document.getElementById('reg-kelas');
+    const selectKelasAdmin = document.getElementById('reg-kelas');
+    const selectKelasPresensi = document.getElementById('pilih-kelas-presensi');
+    
     MASTER_KELAS.forEach(kelas => {
-      const opt = document.createElement('option');
-      opt.value = kelas === "-- Pilih Kelas --" ? "" : kelas;
-      opt.textContent = kelas;
-      selectKelas.appendChild(opt);
+      const opt1 = document.createElement('option');
+      const opt2 = document.createElement('option');
+      opt1.value = opt2.value = kelas === "-- Pilih Kelas --" ? "" : kelas;
+      opt1.textContent = opt2.textContent = kelas;
+      selectKelasAdmin.appendChild(opt1);
+      selectKelasPresensi.appendChild(opt2);
     });
     
-    // Trigger pelacakan GPS pasif sejak halaman pertama dibuka
     initGpsPasif();
   });
 
-  // FUNGSI UTAMA HITUNG JARAK MATHEMATIS (HAVERSINE FORMULA)
   function hitungJarakMeter(lat1, lon1, lat2, lon2) {
-    const R = 6371000; // Jari-jari bumi dalam satuan meter
+    const R = 6371000;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+              Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c; 
   }
 
-  // VALIDASI GPS AKTIF SEBELUM MASUK MODE ABSENSI
+  // VALIDASI SEBELUM MASUK PRESENSI (CEK KELAS & GPS)
   function validasiLokasiSebelumMasukPresensi() {
+    kelasAktifTarget = document.getElementById('pilih-kelas-presensi').value;
+    
+    if (!kelasAktifTarget) {
+      alert("⚠️ Harap pilih KELAS Anda terlebih dahulu sebelum memulai presensi!");
+      return;
+    }
+
     if (!navigator.geolocation) {
       alert("Browser HP Anda tidak mendukung fitur pelacakan lokasi (GPS).");
       return;
@@ -213,7 +221,6 @@
         const userLon = position.coords.longitude;
         const akurasi = position.coords.accuracy;
 
-        // Validasi manipulasi logika Fake GPS via akurasi tak wajar
         if (akurasi < 0.1) {
           alert("Sistem mendeteksi anomali pada GPS perangkat Anda. Harap matikan aplikasi Fake GPS/Mock Location!");
           infoGps.innerText = "❌ Akses diblokir! Terdeteksi Fake GPS.";
@@ -224,21 +231,21 @@
 
         if (jarakKeMasjid <= RADIUS_MAKSIMAL_METER) {
           infoGps.innerHTML = `✅ Terverifikasi berada di area masjid (Jarak: ${Math.round(jarakKeMasjid)}m).`;
-          masukModePresensi(); // Lolos gembok lokasi, buka kamera
+          document.getElementById('label-kelas-aktif').innerText = kelasAktifTarget;
+          masukModePresensi(); 
         } else {
           infoGps.innerHTML = `❌ Jarak Anda terlalu jauh dari Masjid (${Math.round(jarakKeMasjid)} meter).`;
-          alert(`Presensi Ditolak!\nHasil deteksi radar menyatakan HP Ketua Kelas berada ${Math.round(jarakKeMasjid)} meter di luar radius gerbang masjid SMAN 9.`);
+          alert(`Presensi Ditolak!\nHasil deteksi radar menyatakan HP berada ${Math.round(jarakKeMasjid)} meter di luar radius gerbang masjid.`);
         }
       },
       (error) => {
         infoGps.innerText = "❌ Gagal mendeteksi koordinat lokasi HP.";
-        alert("Gagal memproses presensi! Pastikan fitur lokasi/GPS di HP Anda sudah dinyalakan dan memberikan izin akses lokasi ke browser.");
+        alert("Gagal memproses presensi! Pastikan fitur lokasi/GPS di HP Anda sudah dinyalakan.");
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }
 
-  // Fungsi pembantu pelacak GPS pasif di halaman depan
   function initGpsPasif() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -251,105 +258,77 @@
             infoGps.innerHTML = `📍 Anda berada di luar area masjid (${Math.round(jarak)}m).`;
           }
         }, 
-        () => {}, 
-        { enableHighAccuracy: true }
+        () => {}, { enableHighAccuracy: true }
       );
     }
   }
 
-  // FUNGSI UNTUK GENERATE BUNYI "DING"
   function putarSuaraDing() {
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return;
       const ctx = new AudioContext();
-      
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
-      gain1.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-      osc1.connect(gain1); gain1.connect(ctx.destination);
-      osc1.start(ctx.currentTime); osc1.stop(ctx.currentTime + 0.15);
-
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08);
-      gain2.gain.setValueAtTime(0, ctx.currentTime);
-      gain2.gain.setValueAtTime(0.4, ctx.currentTime + 0.08);
+      osc1.type = 'sine'; osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
+      gain1.gain.setValueAtTime(0.3, ctx.currentTime); gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      osc1.connect(gain1); gain1.connect(ctx.destination); osc1.start(ctx.currentTime); osc1.stop(ctx.currentTime + 0.15);
+      const osc2 = ctx.createOscillator(); const gain2 = ctx.createGain();
+      osc2.type = 'sine'; osc2.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08);
+      gain2.gain.setValueAtTime(0, ctx.currentTime); gain2.gain.setValueAtTime(0.4, ctx.currentTime + 0.08);
       gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-      osc2.connect(gain2); gain2.connect(ctx.destination);
-      osc2.start(ctx.currentTime + 0.08); osc2.stop(ctx.currentTime + 0.6);
-    } catch (e) { console.error("Gagal putar audio:", e); }
+      osc2.connect(gain2); gain2.connect(ctx.destination); osc2.start(ctx.currentTime + 0.08); osc2.stop(ctx.currentTime + 0.6);
+    } catch (e) { console.error(e); }
   }
 
-  // NAVIGASI: PINDAH VIEW HALAMAN
   function pindahHalaman(idHalaman) {
     document.querySelectorAll('.halaman-app').forEach(el => el.classList.remove('aktif'));
     document.getElementById(idHalaman).classList.add('aktif');
   }
 
-  // MANAJEMEN START/STOP KAMERA DAN LOGIKA STREAM
   function matikanKamera() {
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
-      localStream = null;
-    }
-    if (loopMengenaliWajah) {
-      clearInterval(loopMengenaliWajah);
-      loopMengenaliWajah = null;
-    }
+    if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
+    if (loopMengenaliWajah) { clearInterval(loopMengenaliWajah); loopMengenaliWajah = null; }
   }
 
   function mulaiKamera(idVideoElement, facingMode) {
     matikanKamera();
     const video = document.getElementById(idVideoElement);
-    
-    navigator.mediaDevices.getUserMedia({ 
-      video: { facingMode: facingMode }, 
-      audio: false 
-    })
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode }, audio: false })
     .then(stream => {
-      localStream = stream;
-      video.srcObject = stream;
-      if (facingMode === "user") { video.classList.add('mirror'); } 
-      else { video.classList.remove('mirror'); }
-      video.onloadedmetadata = function() {
-        video.play().catch(e => console.log("Gagal play:", e));
-      };
+      localStream = stream; video.srcObject = stream;
+      facingMode === "user" ? video.classList.add('mirror') : video.classList.remove('mirror');
+      video.onloadedmetadata = () => video.play().catch(e => console.log(e));
     })
-    .catch(err => {
-      alert("Gagal mengakses kamera: " + err.message);
-      kembaliKeHome();
-    });
+    .catch(err => { alert("Gagal akses kamera."); kembaliKeHome(); });
   }
 
-  // CORE: ASYNC MEMUAT AI & DATABASE WAJAH
+  // CORE: LOAD SSD MOBILENET & SINKRONISASI
   async function inisialisasiAIDanDatabase(idStatusBox) {
     const statusBox = document.getElementById(idStatusBox);
-    if (aiSudahSiap) return true;
     
     try {
-      const MODEL_URL = 'https://unpkg.com/@vladmandic/face-api/model/';
-      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+      if (!aiSudahSiap) {
+        statusBox.innerText = "Memuat Modul AI Kasta Tinggi (SSD MobileNet)... Mohon Tunggu.";
+        const MODEL_URL = 'https://unpkg.com/@vladmandic/face-api/model/';
+        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL); // Model presisi
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+        aiSudahSiap = true;
+      }
       
-      statusBox.innerText = "Modul AI Aktif. Menghubungkan database sekolah...";
+      statusBox.innerText = "Membaca data khusus kelas: " + (kelasAktifTarget || "Semua (Admin)") + "...";
       await sinkronisasiDatabase();
-      
-      aiSudahSiap = true;
       return true;
     } catch (err) {
       console.error(err);
       statusBox.className = "alert alert-danger mb-3 mx-auto max-width-500";
-      statusBox.innerText = "Gagal memuat sistem AI. Periksa koneksi internet.";
+      statusBox.innerText = "Gagal memuat AI. Pastikan internet lancar.";
       return false;
     }
   }
 
+  // STRATEGI 2: FILTER DATA DI FRONTEND
   async function sinkronisasiDatabase() {
     try {
       const response = await fetch(URL_API_GAS, {
@@ -357,10 +336,15 @@
         body: JSON.stringify({ aksi: "ambil_induk" })
       });
       const hasil = await response.json();
-      const dataDariSheets = hasil.data;
+      let dataDariSheets = hasil.data;
 
       if (!dataDariSheets || dataDariSheets.length === 0) {
-        databaseWajahLokal = []; faceMatcher = null; return;
+        faceMatcher = null; return;
+      }
+
+      // FITUR FILTER KELAS: Jika masuk dari mode presensi, saring datanya!
+      if (kelasAktifTarget !== "") {
+        dataDariSheets = dataDariSheets.filter(user => user.kelas === kelasAktifTarget);
       }
 
       const labeledDescriptors = [];
@@ -370,36 +354,41 @@
             const descriptorArray = new Float32Array(JSON.parse(user.vektorTeks));
             labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(user.id + "||" + user.nama + "||" + user.kelas, [descriptorArray]));
           }
-        } catch(e) { console.error("Gagal baca user:", e); }
+        } catch(e) {}
       });
 
       if(labeledDescriptors.length > 0) {
-        faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.4);
+        // Menerapkan ambang batas ketat 0.35
+        faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, AMBANG_BATAS_COCOK);
+      } else {
+        faceMatcher = null;
       }
-    } catch (err) { console.error("Gagal sinkronisasi:", err); }
+    } catch (err) { console.error("Gagal sinkron:", err); }
   }
 
-  // ACTION: TOMBOL HOME - PRESENSI
   async function masukModePresensi() {
     pindahHalaman('page-presensi');
     const statusBox = document.getElementById('status-sistem-presensi');
     statusBox.className = "alert alert-warning mb-3 mx-auto max-width-500";
-    statusBox.innerText = "Kamera aktif. Memuat modul kecerdasan buatan (AI)...";
-    
     mulaiKamera('webcam-presensi', 'user');
     
     const siap = await inisialisasiAIDanDatabase('status-sistem-presensi');
     if (siap) {
-      statusBox.className = "alert alert-success mb-3 mx-auto max-width-500";
-      statusBox.innerText = "Sistem Presensi Siap! AI & Database Wajah Aktif.";
-      loopMengenaliWajah = setInterval(prosesMengenaliWajahBerkala, 500);
+      if (faceMatcher === null) {
+        statusBox.className = "alert alert-danger mb-3 mx-auto max-width-500";
+        statusBox.innerText = `Data Wajah untuk kelas ${kelasAktifTarget} kosong!`;
+      } else {
+        statusBox.className = "alert alert-success mb-3 mx-auto max-width-500";
+        statusBox.innerText = "Kamera Siap. Pagar Kelas Aktif. Silakan absen!";
+        loopMengenaliWajah = setInterval(prosesMengenaliWajahBerkala, 500);
+      }
     }
   }
 
-  // ACTION: TOMBOL HOME - MENU ADMIN
   async function masukMenuAdmin() {
     const pin = prompt("Masukkan PIN Keamanan Admin:");
     if (pin === "1234") {
+      kelasAktifTarget = ""; // Kosongkan target kelas agar admin meload semua data
       pindahHalaman('page-admin');
       document.getElementById('status-sistem-admin').innerText = "Panel Kontrol Admin Siap.";
       currentFacingMode = "environment"; 
@@ -412,6 +401,8 @@
 
   function kembaliKeHome() {
     matikanKamera();
+    kelasAktifTarget = ""; // Reset kelas
+    document.getElementById('pilih-kelas-presensi').selectedIndex = 0;
     pindahHalaman('page-home');
     initGpsPasif();
   }
@@ -421,19 +412,13 @@
     mulaiKamera('webcam-admin', currentFacingMode);
   }
 
-  async function manualSync() {
-    document.getElementById('status-sistem-admin').innerText = "Menyinkronkan data induk...";
-    await sinkronisasiDatabase();
-    document.getElementById('status-sistem-admin').innerText = "Sinkronisasi Berhasil!";
-    alert("Database lokal Kiosk berhasil diperbarui!");
-  }
-
-  // LOGIKA PENCATATAN PRESENSI OTOMATIS
+  // DETEKSI MENGGUNAKAN SSD MOBILENET
   async function prosesMengenaliWajahBerkala() {
     const video = document.getElementById('webcam-presensi');
     if (!video.srcObject || jedaAbsenUser || !faceMatcher) return;
 
-    const deteksi = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+    // Menggunakan Opsi SSD MobileNetv1 (Default jika loadFromUri ssdMobilenetv1 dipakai)
+    const deteksi = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
 
     if (deteksi) {
       const hasilCocok = faceMatcher.findBestMatch(deteksi.descriptor);
@@ -453,7 +438,7 @@
     jedaAbsenUser = true;
     const logBox = document.getElementById('log-absen-terakhir');
     logBox.className = "card status-card d-flex align-items-center justify-content-center p-3 bg-warning text-dark shadow-sm mx-auto max-width-500";
-    logBox.innerText = "Mencatat kehadiran " + nama + " (" + kelas + ")...";
+    logBox.innerText = "Mencatat kehadiran " + nama + "...";
 
     try {
       const response = await fetch(URL_API_GAS, {
@@ -462,16 +447,14 @@
       });
       const hasilData = await response.json();
 
-      if (hasilData.status && hasilData.status.includes("SUKSES")) {
-        putarSuaraDing();
-      }
-
+      if (hasilData.status && hasilData.status.includes("SUKSES")) { putarSuaraDing(); }
       localStorage.setItem("absen_" + id, tanggalHariIni);
+      
       logBox.className = "card status-card d-flex align-items-center justify-content-center p-3 bg-success text-white shadow-sm mx-auto max-width-500";
-      logBox.innerHTML = "🎯 ABSEN BERHASIL!<br>" + nama + "<br>Kelas: " + kelas;
+      logBox.innerHTML = "🎯 ABSEN BERHASIL!<br>" + nama;
     } catch (err) {
       logBox.className = "card status-card d-flex align-items-center justify-content-center p-3 bg-danger text-white shadow-sm mx-auto max-width-500";
-      logBox.innerText = "Gagal mengirim data absen ke server.";
+      logBox.innerText = "Gagal mengirim data ke server.";
     }
 
     setTimeout(() => {
@@ -481,21 +464,19 @@
     }, 3000);
   }
 
-  // LOGIKA PENDAFTARAN SISWA BARU
   async function tangkapDanDaftarWajah() {
     const id = document.getElementById('reg-id').value.trim();
     const nama = document.getElementById('reg-nama').value.trim();
     const kelas = document.getElementById('reg-kelas').value; 
     const video = document.getElementById('webcam-admin');
     
-    if (!id || !nama || !kelas) { alert("Semua kolom form (termasuk pilihan kelas) wajib diisi!"); return; }
+    if (!id || !nama || !kelas) { alert("Semua kolom wajib diisi!"); return; }
+    document.getElementById('status-sistem-admin').innerText = "Memindai dengan Akurasi Tinggi... Tahan posisi.";
 
-    document.getElementById('status-sistem-admin').innerText = "Sedang memindai wajah... Mohon tidak bergerak.";
-
-    const deteksi = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+    const deteksi = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
     if (!deteksi) { 
       document.getElementById('status-sistem-admin').innerText = "Panel Kontrol Admin Siap.";
-      alert("Wajah tidak terdeteksi! Pastikan wajah siswa terlihat jelas di layar."); 
+      alert("Wajah tidak terdeteksi jelas. Mundur sedikit atau cari cahaya yang terang."); 
       return; 
     }
 
@@ -507,74 +488,45 @@
         body: JSON.stringify({ aksi: "simpan_wajah", id: id, nama: nama, kelas: kelas, descriptor: descriptorString })
       });
       const respons = await response.json();
-      
-      if (respons.status && respons.status.includes("SUKSES")) {
-        putarSuaraDing();
-      }
+      if (respons.status && respons.status.includes("SUKSES")) { putarSuaraDing(); }
       
       alert(respons.status);
-      document.getElementById('reg-id').value = "";
-      document.getElementById('reg-nama').value = "";
+      document.getElementById('reg-id').value = ""; document.getElementById('reg-nama').value = "";
       document.getElementById('reg-kelas').selectedIndex = 0; 
       
       await sinkronisasiDatabase();
       kembaliKeHome();
-    } catch(e) {
-      alert("Gagal mendaftarkan wajah baru.");
-    }
+    } catch(e) { alert("Gagal mendaftar."); }
   }
 
-  // LOGIKA LAPORAN REKAP EXCEL FRONTEND
   async function prosesRekapHarianExcel() {
-    if (!confirm("Apakah Anda yakin ingin memproses rekapitulasi? Langkah ini akan MENGUNDUH data dalam format Excel dan secara otomatis MENGHAPUS seluruh log harian di database Spreadsheet.")) return;
-    
-    document.getElementById('status-sistem-admin').innerText = "Menghubungi server & memproses data rekap... Silakan tunggu.";
+    if (!confirm("Unduh rekap dan kosongkan log harian Google Sheets?")) return;
+    document.getElementById('status-sistem-admin').innerText = "Memproses rekap...";
     
     try {
-      const response = await fetch(URL_API_GAS, {
-        method: "POST",
-        body: JSON.stringify({ aksi: "buat_rekap" })
-      });
+      const response = await fetch(URL_API_GAS, { method: "POST", body: JSON.stringify({ aksi: "buat_rekap" }) });
       const respons = await response.json();
-      
-      if (respons.status !== "SUKSES") {
-        alert(respons.status);
-        return;
-      }
+      if (respons.status !== "SUKSES") { alert(respons.status); return; }
       
       const dataRekap = respons.dataRekap;
-      const tanggalFile = respons.tanggal;
-      
-      const wb = XLSX.utils.book_new();
-      let dataUntukExcel = [];
+      const wb = XLSX.utils.book_new(); let dataUntukExcel = [];
       
       for (let kls in dataRekap) {
         dataUntukExcel.push(["KELAS: " + kls, "", ""]);
         dataUntukExcel.push(["Jam Absen", "ID Siswa", "Nama Siswa"]);
-        dataRekap[kls].forEach(item => {
-          dataUntukExcel.push([item.jam, item.id, item.nama]);
-        });
-        dataUntukExcel.push(["", "", ""]);
-        dataUntukExcel.push(["", "", ""]);
+        dataRekap[kls].forEach(item => dataUntukExcel.push([item.jam, item.id, item.nama]));
+        dataUntukExcel.push(["", "", ""], ["", "", ""]);
       }
       
-      if (dataUntukExcel.length === 0) {
-        alert("Tidak ada data presensi yang valid untuk diproses ke Excel.");
-        return;
-      }
+      if (dataUntukExcel.length === 0) { alert("Data presensi kosong."); return; }
       
       const ws = XLSX.utils.aoa_to_sheet(dataUntukExcel);
       XLSX.utils.book_append_sheet(wb, ws, "Rekap_Presensi");
-      XLSX.writeFile(wb, `Rekap_Presensi_${tanggalFile}.xlsx`);
+      XLSX.writeFile(wb, `Rekap_Presensi_${respons.tanggal}.xlsx`);
       
-      alert("SUKSES: Laporan Excel berhasil diunduh dan Log harian di Google Sheets telah dibersihkan!");
-      localStorage.clear(); 
-      kembaliKeHome();
-      
-    } catch (e) {
-      console.error(e);
-      alert("Gagal memproses rekap harian.");
-    }
+      alert("Berhasil unduh Excel & Log dibersihkan!");
+      localStorage.clear(); kembaliKeHome();
+    } catch (e) { alert("Gagal proses rekap."); }
   }
 </script>
 </body>
