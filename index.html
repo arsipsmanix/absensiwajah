@@ -74,7 +74,7 @@
       </div>
     </div>
     <div id="info-gps-home" class="text-secondary mb-3" style="font-size: 0.9rem;">📍 Menunggu validasi radar GPS...</div>
-    <div class="text-muted" style="font-size: 0.85rem;">Si-WAJAH | Develop by #3 @2026 | Part of SYNC9</div>
+    <div class="text-muted" style="font-size: 0.85rem;">Si-WAJAH | Develop by pakgurutri @2026 | Part of SYNC9</div>
   </div>
 
 
@@ -129,7 +129,7 @@
       <div class="mb-2">
         <input type="text" id="reg-nama" class="form-control form-control-sm" placeholder="Nama Lengkap Siswa">
       </div>
-      <button class="btn btn-primary btn-sm w-100 mb-3" onclick="tangkapDanDaftarWajah()">Pindai & Daftarkan Wajah (Akurasi Tinggi)</button>
+      <button class="btn btn-primary btn-sm w-100 mb-3" onclick="tangkapDanDaftarWajah()">Pindai & Daftarkan Wajah (Mode Cepat)</button>
       
       <hr class="my-2">
       <h5 class="mb-2 text-success fw-bold">Menu Manajemen & Laporan</h5>
@@ -153,7 +153,7 @@
   const TARGET_LON = 112.749838;
   const RADIUS_MAKSIMAL_METER = 40; 
   
-  // STRATEGI 1: Ambang batas diperketat menjadi 0.35 (sangat akurat)
+  // STRATEGI 1: Ambang batas diperketat menjadi 0.35 (sangat akurat untuk membedakan wajah)
   const AMBANG_BATAS_COCOK = 0.35; 
 
   const MASTER_KELAS = [
@@ -380,7 +380,8 @@
       } else {
         statusBox.className = "alert alert-success mb-3 mx-auto max-width-500";
         statusBox.innerText = "Kamera Siap. Pagar Kelas Aktif. Silakan absen!";
-        loopMengenaliWajah = setInterval(prosesMengenaliWajahBerkala, 500);
+        // INTERVAL DIUBAH KE 800 UNTUK MENGHEMAT CPU HP
+        loopMengenaliWajah = setInterval(prosesMengenaliWajahBerkala, 800);
       }
     }
   }
@@ -417,7 +418,7 @@
     const video = document.getElementById('webcam-presensi');
     if (!video.srcObject || jedaAbsenUser || !faceMatcher) return;
 
-    // Menggunakan Opsi SSD MobileNetv1 (Default jika loadFromUri ssdMobilenetv1 dipakai)
+    // Menggunakan Opsi SSD MobileNetv1 (Default)
     const deteksi = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
 
     if (deteksi) {
@@ -473,7 +474,9 @@
     if (!id || !nama || !kelas) { alert("Semua kolom wajib diisi!"); return; }
     document.getElementById('status-sistem-admin').innerText = "Memindai dengan Akurasi Tinggi... Tahan posisi.";
 
-    const deteksi = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
+    // PELUNAKAN PENDAFTARAN (minConfidence: 0.3) AGAR LEBIH GAMPANG DAFTAR BARU
+    const deteksi = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 })).withFaceLandmarks().withFaceDescriptor();
+    
     if (!deteksi) { 
       document.getElementById('status-sistem-admin').innerText = "Panel Kontrol Admin Siap.";
       alert("Wajah tidak terdeteksi jelas. Mundur sedikit atau cari cahaya yang terang."); 
