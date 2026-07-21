@@ -55,7 +55,7 @@
     <div class="card p-4 shadow-sm border-0 bg-white rounded-4 mb-3">
       <h5 class="fw-bold mb-3 text-start text-secondary text-center">Pilih Mode Aplikasi</h5>
       
-      <!-- TAMBAHAN: Dropdown Pilih Kelas Sebelum Absen -->
+      <!-- Dropdown Pilih Kelas Sebelum Absen -->
       <div class="mb-3 text-start">
         <label class="form-label fw-bold text-dark mb-1">Kelas Anda (Pilih Sebelum Absen):</label>
         <select id="pilih-kelas-presensi" class="form-select border-primary border-2 shadow-sm">
@@ -65,7 +65,7 @@
 
       <div class="card menu-card p-3 border-start border-primary border-4 shadow-sm bg-light mb-3 text-start" onclick="validasiLokasiSebelumMasukPresensi()">
         <h5 class="fw-bold text-primary m-0">📸 Mulai Presensi Kelas</h5>
-        <small class="text-muted">Aktifkan kamera depan Kiosk khusus untuk kelas yang dipilih (Proteksi GPS & SSD Aktif).</small>
+        <small class="text-muted">Aktifkan kamera Kiosk khusus kelas terpilih (Proteksi GPS Aktif, Kinerja Cepat).</small>
       </div>
       
       <div class="card menu-card p-3 border-start border-danger border-4 shadow-sm bg-light text-start" onclick="masukMenuAdmin()">
@@ -77,7 +77,6 @@
     <div class="text-muted" style="font-size: 0.85rem;">Si-WAJAH | Develop by pakgurutri @2026 | Part of SYNC9</div>
   </div>
 
-
   <!-- HALAMAN PRESENSI -->
   <div id="page-presensi" class="halaman-app">
     <div class="d-flex align-items-center justify-content-center mb-3">
@@ -85,7 +84,7 @@
       <h4 class="m-0 fw-bold">Presensi <span id="label-kelas-aktif" class="text-primary"></span></h4>
     </div>
     
-    <div id="status-sistem-presensi" class="alert alert-warning mb-3 mx-auto max-width-500">Memuat kecerdasan buatan (AI SSD MobileNet)...</div>
+    <div id="status-sistem-presensi" class="alert alert-warning mb-3 mx-auto max-width-500">Memuat kecerdasan buatan (TinyFace Fast Mode)...</div>
     
     <div id="video-container" class="mb-3">
       <video id="webcam-presensi" class="mirror" autoplay playsinline muted></video>
@@ -97,7 +96,6 @@
     
     <button class="btn btn-secondary btn-sm" onclick="kembaliKeHome()">🏠 Kembali ke Halaman Utama</button>
   </div>
-
 
   <!-- HALAMAN ADMIN -->
   <div id="page-admin" class="halaman-app">
@@ -129,7 +127,7 @@
       <div class="mb-2">
         <input type="text" id="reg-nama" class="form-control form-control-sm" placeholder="Nama Lengkap Siswa">
       </div>
-      <button class="btn btn-primary btn-sm w-100 mb-3" onclick="tangkapDanDaftarWajah()">Pindai & Daftarkan Wajah (Mode Cepat)</button>
+      <button class="btn btn-primary btn-sm w-100 mb-3" onclick="tangkapDanDaftarWajah()">Pindai & Daftarkan Wajah (Tiny Cepat)</button>
       
       <hr class="my-2">
       <h5 class="mb-2 text-success fw-bold">Menu Manajemen & Laporan</h5>
@@ -153,13 +151,15 @@
   const TARGET_LON = 112.749838;
   const RADIUS_MAKSIMAL_METER = 40; 
   
-  // STRATEGI 1: Ambang batas diperketat menjadi 0.35 (sangat akurat untuk membedakan wajah)
+  // STRATEGI HYBRID: AI Ringan tapi Filter Ketat (0.35)
   const AMBANG_BATAS_COCOK = 0.35; 
 
   const MASTER_KELAS = [
     "-- Pilih Kelas --",
     "X-1", "X-2", "X-3", "X-4", "X-5", 
-    "X-6", "X-7", "X-8", "X-9", "X-10", "X-11", "XI A-1", "XI A-2", "XI A-3", "XI A-4", "XI B", "XI C-1", "XI C-2", "XI C-3", "XI C-4", "XI D", "XII A-1", "XII A-2", "XII A-3", "XII A-4", "XII B", "XII C-1", "XII C-2", "XII C-3", "XII D-1", "XII D-2"
+    "X-6", "X-7", "X-8", "X-9", "X-10", "X-11", 
+    "XI A-1", "XI A-2", "XI A-3", "XI A-4", "XI B", "XI C-1", "XI C-2", "XI C-3", "XI C-4", "XI D", 
+    "XII A-1", "XII A-2", "XII A-3", "XII A-4", "XII B", "XII C-1", "XII C-2", "XII C-3", "XII D-1", "XII D-2"
   ];
 
   let faceMatcher = null;
@@ -168,9 +168,8 @@
   let currentFacingMode = "user"; 
   let localStream = null;
   let aiSudahSiap = false;
-  let kelasAktifTarget = ""; // Menyimpan kelas yang dipilih saat presensi
+  let kelasAktifTarget = ""; 
 
-  // Generate Dropdown Kelas
   window.addEventListener('DOMContentLoaded', () => {
     const selectKelasAdmin = document.getElementById('reg-kelas');
     const selectKelasPresensi = document.getElementById('pilih-kelas-presensi');
@@ -198,7 +197,6 @@
     return R * c; 
   }
 
-  // VALIDASI SEBELUM MASUK PRESENSI (CEK KELAS & GPS)
   function validasiLokasiSebelumMasukPresensi() {
     kelasAktifTarget = document.getElementById('pilih-kelas-presensi').value;
     
@@ -303,15 +301,16 @@
     .catch(err => { alert("Gagal akses kamera."); kembaliKeHome(); });
   }
 
-  // CORE: LOAD SSD MOBILENET & SINKRONISASI
+  // KEMBALI MENGGUNAKAN TINYFACE YANG RINGAN DAN NGEBUT
   async function inisialisasiAIDanDatabase(idStatusBox) {
     const statusBox = document.getElementById(idStatusBox);
     
     try {
       if (!aiSudahSiap) {
-        statusBox.innerText = "Memuat Modul AI Kasta Tinggi (SSD MobileNet)... Mohon Tunggu.";
+        statusBox.innerText = "Memuat Modul AI TinyFace (Mode Cepat)...";
         const MODEL_URL = 'https://unpkg.com/@vladmandic/face-api/model/';
-        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL); // Model presisi
+        // Kembalikan ke TinyFaceDetector
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
         await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
         await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
         aiSudahSiap = true;
@@ -328,7 +327,7 @@
     }
   }
 
-  // STRATEGI 2: FILTER DATA DI FRONTEND
+  // FILTER DATA PER KELAS TETAP JALAN
   async function sinkronisasiDatabase() {
     try {
       const response = await fetch(URL_API_GAS, {
@@ -342,7 +341,7 @@
         faceMatcher = null; return;
       }
 
-      // FITUR FILTER KELAS: Jika masuk dari mode presensi, saring datanya!
+      // FITUR PINTAR: Hanya ambil data wajah sesuai kelas yang dipilih!
       if (kelasAktifTarget !== "") {
         dataDariSheets = dataDariSheets.filter(user => user.kelas === kelasAktifTarget);
       }
@@ -358,7 +357,7 @@
       });
 
       if(labeledDescriptors.length > 0) {
-        // Menerapkan ambang batas ketat 0.35
+        // Threshold ketat dipertahankan agar tidak asal tembak
         faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, AMBANG_BATAS_COCOK);
       } else {
         faceMatcher = null;
@@ -380,8 +379,8 @@
       } else {
         statusBox.className = "alert alert-success mb-3 mx-auto max-width-500";
         statusBox.innerText = "Kamera Siap. Pagar Kelas Aktif. Silakan absen!";
-        // INTERVAL DIUBAH KE 800 UNTUK MENGHEMAT CPU HP
-        loopMengenaliWajah = setInterval(prosesMengenaliWajahBerkala, 800);
+        // Dikembalikan ke 500ms karena TinyFace sangat ringan
+        loopMengenaliWajah = setInterval(prosesMengenaliWajahBerkala, 500);
       }
     }
   }
@@ -389,7 +388,7 @@
   async function masukMenuAdmin() {
     const pin = prompt("Masukkan PIN Keamanan Admin:");
     if (pin === "1234") {
-      kelasAktifTarget = ""; // Kosongkan target kelas agar admin meload semua data
+      kelasAktifTarget = ""; 
       pindahHalaman('page-admin');
       document.getElementById('status-sistem-admin').innerText = "Panel Kontrol Admin Siap.";
       currentFacingMode = "environment"; 
@@ -402,7 +401,7 @@
 
   function kembaliKeHome() {
     matikanKamera();
-    kelasAktifTarget = ""; // Reset kelas
+    kelasAktifTarget = ""; 
     document.getElementById('pilih-kelas-presensi').selectedIndex = 0;
     pindahHalaman('page-home');
     initGpsPasif();
@@ -413,13 +412,13 @@
     mulaiKamera('webcam-admin', currentFacingMode);
   }
 
-  // DETEKSI MENGGUNAKAN SSD MOBILENET
+  // DETEKSI MENGGUNAKAN TINYFACE (CEPAT & RINGAN)
   async function prosesMengenaliWajahBerkala() {
     const video = document.getElementById('webcam-presensi');
     if (!video.srcObject || jedaAbsenUser || !faceMatcher) return;
 
-    // Menggunakan Opsi SSD MobileNetv1 (Default)
-    const deteksi = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptor();
+    // Kembali pakai TinyFaceDetectorOptions
+    const deteksi = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
 
     if (deteksi) {
       const hasilCocok = faceMatcher.findBestMatch(deteksi.descriptor);
@@ -472,14 +471,14 @@
     const video = document.getElementById('webcam-admin');
     
     if (!id || !nama || !kelas) { alert("Semua kolom wajib diisi!"); return; }
-    document.getElementById('status-sistem-admin').innerText = "Memindai dengan Akurasi Tinggi... Tahan posisi.";
+    document.getElementById('status-sistem-admin').innerText = "Memindai wajah... (Cepat)";
 
-    // PELUNAKAN PENDAFTARAN (minConfidence: 0.3) AGAR LEBIH GAMPANG DAFTAR BARU
-    const deteksi = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 })).withFaceLandmarks().withFaceDescriptor();
+    // Daftar pakai TinyFaceDetectorOptions
+    const deteksi = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
     
     if (!deteksi) { 
       document.getElementById('status-sistem-admin').innerText = "Panel Kontrol Admin Siap.";
-      alert("Wajah tidak terdeteksi jelas. Mundur sedikit atau cari cahaya yang terang."); 
+      alert("Wajah tidak terdeteksi. Pastikan pencahayaan cukup dan wajah terlihat jelas."); 
       return; 
     }
 
